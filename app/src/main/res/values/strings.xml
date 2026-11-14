@@ -1,0 +1,81 @@
+<resources>
+    <string name="app_name">PHONE PAY</string>
+    <string name="brand_tagline">Secure UPI Infrastructure</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_scan">Scan QR</string>
+    <string name="nav_history">History</string>
+    <string name="nav_security">Security</string>
+
+    <string name="auth_title">Welcome to PHONE PAY</string>
+    <string name="auth_subtitle">Authorized UPI payments with Google Sign-In, biometric lock, and server-verified receipts.</string>
+    <string name="auth_sign_in_google">Sign in with Google</string>
+    <string name="auth_badge_npci">Official UPI Intent &amp; PSP Flow</string>
+    <string name="auth_badge_pin">Zero UPI PIN Storage</string>
+    <string name="auth_badge_tls">TLS 1.3 &amp; Keystore Encrypted</string>
+
+    <string name="home_greeting">Namaste, %1$s</string>
+    <string name="home_daily_limit_title">24h NPCI Spending Limit</string>
+    <string name="home_remaining">Remaining today: %1$s</string>
+    <string name="home_scan_cta">Scan &amp; Pay Any UPI QR</string>
+    <string name="home_scan_sub">Supports NPCI UPI QR &amp; BharatQR</string>
+    <string name="home_manual_vpa_cta">Pay by UPI ID</string>
+    <string name="home_verify_status_cta">Verify Pending</string>
+    <string name="home_psp_status_ready">PSP Gateway: Configured</string>
+    <string name="home_psp_status_unconfigured">PSP Gateway: Bank/RBI Approval Pending</string>
+    <string name="home_recent_activity">Recent Verified &amp; Audited Activity</string>
+    <string name="home_empty_txns">No UPI transactions yet. Scan a merchant QR code to start a real payment flow.</string>
+
+    <string name="scan_title">Scan Merchant UPI QR</string>
+    <string name="scan_instruction">Align any NPCI UPI or BharatQR code inside the frame</string>
+    <string name="scan_gallery_cta">Pick QR from Gallery</string>
+    <string name="scan_torch_on">Torch On</string>
+    <string name="scan_torch_off">Torch Off</string>
+    <string name="scan_manual_toggle">Enter UPI ID Manually</string>
+    <string name="scan_permission_title">Camera Permission Needed</string>
+    <string name="scan_permission_desc">PHONE PAY uses your camera solely to scan merchant UPI QR codes locally on-device.</string>
+    <string name="scan_grant_camera">Allow Camera</string>
+    <string name="scan_invalid_qr">Not a valid NPCI UPI QR code. Please scan a valid merchant or VPA QR.</string>
+
+    <string name="pay_title">Review &amp; Enter Amount</string>
+    <string name="pay_verified_merchant">Verified Merchant (MCC %1$s)</string>
+    <string name="pay_personal_vpa">Unverified / Personal VPA</string>
+    <string name="pay_signed_qr">NPCI Signed QR</string>
+    <string name="pay_amount_label">Amount (INR)</string>
+    <string name="pay_note_label">Payment Note (Optional)</string>
+    <string name="pay_note_hint">e.g. Groceries, Order #402</string>
+    <string name="pay_cooling_notice">24h new payee cooling limit active: max ₹5,000 for first-time personal VPAs.</string>
+    <string name="pay_fraud_score">Fraud Check Score: %1$d/100</string>
+    <string name="pay_fraud_blocked">Blocked by Fraud &amp; Limits Engine</string>
+    <string name="pay_proceed_cta">Proceed to Authorize &amp; Pay</string>
+    <string name="pay_pin_disclaimer">UPI PIN is entered exclusively inside your authorized Bank / PSP app. PHONE PAY never asks for or stores your UPI PIN.</string>
+
+    <string name="result_success_title">Payment Confirmed by PSP</string>
+    <string name="result_pending_title">Awaiting Provider Confirmation</string>
+    <string name="result_failed_title">Payment Not Completed</string>
+    <string name="result_psp_required_title">PSP &amp; Bank Approval Required</string>
+    <string name="result_fraud_title">Blocked for Your Protection</string>
+    <string name="result_verify_cta">Verify Status with PSP</string>
+    <string name="result_share_receipt_cta">Share PDF Receipt</string>
+    <string name="result_done_cta">Back to Home</string>
+    <string name="result_utr_label">Bank UTR / RRN</string>
+    <string name="result_order_label">PSP Order ID</string>
+    <string name="result_txref_label">NPCI Txn Ref</string>
+
+    <string name="history_title">Transaction History</string>
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_verified">Verified</string>
+    <string name="history_filter_pending">Pending</string>
+    <string name="history_filter_failed">Failed</string>
+    <string name="history_search_hint">Search merchant or UPI ID…</string>
+
+    <string name="security_title">Security, Limits &amp; Language</string>
+    <string name="security_language_label">App Language / भाषा</string>
+    <string name="security_biometric_label">Biometric Payment Lock</string>
+    <string name="security_biometric_sub">Require fingerprint or device lock before launching UPI PSP</string>
+    <string name="security_daily_limit">Daily UPI Limit (Max ₹1,00,000)</string>
+    <string name="security_pertxn_limit">Per-Transaction Limit</string>
+    <string name="security_psp_endpoint">Authorized PSP Backend URL (HTTPS)</string>
+    <string name="security_save_cta">Save Security Settings</string>
+    <string name="security_sign_out">Sign Out</string>
+    <string name="security_compliance_note">Genuine UPI transactions require deployment of the companion backend connected to an RBI-regulated PSP / sponsor bank and NPCI certification.</string>
+</resources>

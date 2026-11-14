@@ -1,0 +1,6 @@
+{
+  "name": "PHONE PAY",
+  "description": "Android UPI payment application with QR scanning, authorized PSP intent and server-side status verification, bilingual Hindi/English UI, fraud limits, and digital receipts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

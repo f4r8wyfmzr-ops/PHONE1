@@ -1,0 +1,196 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+             data.email is string && data.email.size() >= 3 && data.email.size() <= 120 &&
+             data.preferredLanguage in ['en', 'hi'] &&
+             data.biometricLockEnabled is bool &&
+             data.dailyLimitPaise is int && data.dailyLimitPaise >= 100 && data.dailyLimitPaise <= 10000000 &&
+             data.perTxnLimitPaise is int && data.perTxnLimitPaise >= 100 && data.perTxnLimitPaise <= data.dailyLimitPaise &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isClientAllowedStatus(status) {
+      // Client SDK is strictly forbidden from forging VERIFIED_SUCCESS;
+      // only server-side Admin SDK (after real PSP confirmation) may set VERIFIED_SUCCESS.
+      return status in [
+        'INITIATED',
+        'AWAITING_PSP_CONFIRMATION',
+        'PENDING_VERIFICATION',
+        'FAILED',
+        'USER_CANCELLED',
+        'BLOCKED_FRAUD',
+        'PSP_UNAVAILABLE'
+      ];
+    }
+
+    function isTerminalClientStatus(status) {
+      return status in [
+        'VERIFIED_SUCCESS',
+        'FAILED',
+        'USER_CANCELLED',
+        'BLOCKED_FRAUD',
+        'PSP_UNAVAILABLE'
+      ];
+    }
+
+    function isValidTransaction(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.pspOrderId is string && data.pspOrderId.size() >= 1 && data.pspOrderId.size() <= 128 &&
+             data.txRef is string && data.txRef.size() >= 1 && data.txRef.size() <= 128 &&
+             data.payeeVpa is string && data.payeeVpa.size() >= 5 && data.payeeVpa.size() <= 128 &&
+             data.payeeName is string && data.payeeName.size() >= 1 && data.payeeName.size() <= 120 &&
+             (!('merchantCode' in data) || (data.merchantCode is string && data.merchantCode.size() <= 16)) &&
+             data.amountPaise is int && data.amountPaise >= 100 && data.amountPaise <= 10000000 &&
+             data.currency == 'INR' &&
+             (!('note' in data) || (data.note is string && data.note.size() <= 120)) &&
+             isClientAllowedStatus(data.status) &&
+             data.pspVerified == false &&
+             (!('utrNumber' in data) || (data.utrNumber is string && data.utrNumber.size() == 0)) &&
+             (!('failureReason' in data) || (data.failureReason is string && data.failureReason.size() <= 240)) &&
+             data.fraudRiskScore is int && data.fraudRiskScore >= 0 && data.fraudRiskScore <= 100 &&
+             (!('fraudFlags' in data) || (data.fraudFlags is list && data.fraudFlags.size() <= 10 && (data.fraudFlags.size() == 0 || data.fraudFlags[0] is string))) &&
+             (!('pspAppPackage' in data) || (data.pspAppPackage is string && data.pspAppPackage.size() <= 128)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidBeneficiary(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.vpa is string && data.vpa.size() >= 5 && data.vpa.size() <= 128 &&
+             data.merchantName is string && data.merchantName.size() >= 1 && data.merchantName.size() <= 120 &&
+             data.isVerifiedMerchant is bool &&
+             data.firstPaidAt is timestamp && data.firstPaidAt <= request.time &&
+             data.lastPaidAt is timestamp && data.lastPaidAt <= request.time &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'displayName', 'email', 'preferredLanguage',
+                         'biometricLockEnabled', 'dailyLimitPaise', 'perTxnLimitPaise',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'displayName', 'email', 'preferredLanguage',
+                         'biometricLockEnabled', 'dailyLimitPaise', 'perTxnLimitPaise',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'displayName', 'email', 'preferredLanguage',
+                         'biometricLockEnabled', 'dailyLimitPaise', 'perTxnLimitPaise',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if false;
+
+      match /transactions/{txId} {
+        allow get: if isOwner(userId) && isValidId(txId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(txId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'pspOrderId', 'txRef', 'payeeVpa', 'payeeName',
+                           'amountPaise', 'currency', 'status', 'pspVerified',
+                           'fraudRiskScore', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'pspOrderId', 'txRef', 'payeeVpa', 'payeeName',
+                           'merchantCode', 'amountPaise', 'currency', 'note', 'status',
+                           'pspVerified', 'utrNumber', 'failureReason', 'fraudRiskScore',
+                           'fraudFlags', 'pspAppPackage', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidTransaction(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(txId) &&
+                         isValidTransaction(incoming()) &&
+                         !isTerminalClientStatus(existing().status) &&
+                         incoming().userId == existing().userId &&
+                         incoming().pspOrderId == existing().pspOrderId &&
+                         incoming().txRef == existing().txRef &&
+                         incoming().payeeVpa == existing().payeeVpa &&
+                         incoming().amountPaise == existing().amountPaise &&
+                         incoming().currency == existing().currency &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'status', 'failureReason', 'pspAppPackage', 'updatedAt'
+                         ]);
+
+        allow delete: if false;
+      }
+
+      match /beneficiaries/{vpaId} {
+        allow get: if isOwner(userId) && isValidId(vpaId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(vpaId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'vpa', 'merchantName', 'isVerifiedMerchant',
+                           'firstPaidAt', 'lastPaidAt', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'vpa', 'merchantName', 'isVerifiedMerchant',
+                           'firstPaidAt', 'lastPaidAt', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidBeneficiary(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(vpaId) &&
+                         isValidBeneficiary(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().vpa == existing().vpa &&
+                         incoming().firstPaidAt == existing().firstPaidAt &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'merchantName', 'isVerifiedMerchant', 'lastPaidAt', 'updatedAt'
+                         ]);
+
+        allow delete: if false;
+      }
+    }
+  }
+}
